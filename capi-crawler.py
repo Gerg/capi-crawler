@@ -97,7 +97,7 @@ class ResourceGraph(object):
     def draw(self):
         graph_draw(
                 self.graph,
-                pos=arf_layout(self.graph),
+                pos=radial_tree_layout(self.graph, self.graph.vertex(0)),
                 vertex_text=self.v_names,
                 vertex_fill_color=self.v_colors,
                 edge_text=self.e_names,
