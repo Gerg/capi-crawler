@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from graph_tool.all import *
+from graph_tool.all import Graph, graph_draw, radial_tree_layout
 from urllib.parse import urlparse
 
 import os
@@ -22,6 +22,7 @@ class CfApi(object):
         url = f'http://{self.api}{endpoint}'
         r = requests.get(url, headers=headers)
         return r.json()
+
 
 class Link(object):
     def __init__(self, linkDict):
@@ -56,6 +57,7 @@ class ResourcePath(object):
         non_guid_segments = [segment for segment in segments if segment not in self.__class__.placeholders]
         return non_guid_segments[-1]
 
+
 class ResourceGraph(object):
     v3_color = '#1C366B'
     v2_color = '#1DACE8'
@@ -85,7 +87,6 @@ class ResourceGraph(object):
         else:
             return self.__class__.v2_color
 
-
     def has_resource(self, resource_name):
         return resource_name in self.vertices
 
@@ -111,13 +112,14 @@ class ResourceGraph(object):
                 vertex_text=self.v_names,
                 vertex_fill_color=self.v_colors,
                 edge_text=self.e_names,
-                output_size=(2000,1300),
+                output_size=(2000, 1300),
                 fit_view=True,
                 vertex_font_size=10,
                 vertex_pen_width=1,
                 vertex_halo=False,
                 edge_pen_width=3,
                 )
+
 
 class Crawler(object):
     def __init__(self, cf_api, graph):
