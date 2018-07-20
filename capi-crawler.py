@@ -59,6 +59,7 @@ class ResourcePath(object):
 class ResourceGraph(object):
     v3_color = '#1C366B'
     v2_color = '#1DACE8'
+    special_color = '#C4CFD0'
 
     def __init__(self):
         self.graph = Graph()
@@ -70,11 +71,20 @@ class ResourceGraph(object):
         self.vertices = {}
         self.edges = {}
 
-    def add_resource(self, resource_name, is_v3=True):
+    def add_resource(self, resource_name, is_v3=True, is_special=False):
         vertex = self.graph.add_vertex()
         self.vertices[resource_name] = vertex
         self.v_names[vertex] = resource_name
-        self.v_colors[vertex] = self.__class__.v3_color if is_v3 else self.__class__.v2_color
+        self.v_colors[vertex] = self.get_color(is_v3, is_special)
+
+    def get_color(self, is_v3, is_special):
+        if is_special:
+            return self.__class__.special_color
+        elif is_v3:
+            return self.__class__.v3_color
+        else:
+            return self.__class__.v2_color
+
 
     def has_resource(self, resource_name):
         return resource_name in self.vertices
@@ -136,7 +146,7 @@ class Crawler(object):
             print(f'    {path_sans_guid} -- {linked_resource_name}')
 
             if not self.graph.has_resource(linked_resource_name):
-                self.graph.add_resource(linked_resource_name, link.is_v3())
+                self.graph.add_resource(linked_resource_name, link.is_v3(), link.is_download() or not link.is_read())
 
             if not self.graph.has_link(resource_name, linked_resource_name, path_sans_guid):
                 self.graph.add_link(resource_name, linked_resource_name, path_sans_guid)
