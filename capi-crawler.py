@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-from urllib.parse import urlparse
 from graph_tool.all import *
+from urllib.parse import urlparse
 
 import os
 import re
@@ -57,11 +57,16 @@ class ResourcePath(object):
         return non_guid_segments[-1]
 
 class ResourceGraph(object):
+    v3_color = '#1C366B'
+    v2_color = '#1DACE8'
+
     def __init__(self):
         self.graph = Graph()
 
         self.v_names = self.graph.new_vertex_property("string")
+        self.v_colors = self.graph.new_vertex_property("string")
         self.graph.vertex_properties["name"] = self.v_names
+        self.graph.vertex_properties["color"] = self.v_colors
 
         self.e_names = self.graph.new_edge_property("string")
         self.graph.edge_properties["name"] = self.e_names
@@ -69,10 +74,11 @@ class ResourceGraph(object):
         self.vertices = {}
         self.edges = {}
 
-    def add_resource(self, resource_name):
+    def add_resource(self, resource_name, is_v3=True):
         vertex = self.graph.add_vertex()
         self.vertices[resource_name] = vertex
         self.v_names[vertex] = resource_name
+        self.v_colors[vertex] = self.__class__.v3_color if is_v3 else self.__class__.v2_color
 
     def has_resource(self, resource_name):
         return resource_name in self.vertices
@@ -97,6 +103,7 @@ class ResourceGraph(object):
                 self.graph,
                 pos=arf_layout(self.graph),
                 vertex_text=self.v_names,
+                vertex_fill_color=self.v_colors,
                 edge_text=self.e_names,
                 output_size=(2000,1300),
                 fit_view=True,
@@ -124,9 +131,8 @@ class Crawler(object):
         if not self.graph.has_resource(resource_name):
             self.graph.add_resource(resource_name)
 
-        links = self.get_links_from_endpoint(root)
-        found_paths = self.get_paths_from_links(links)
-        for path in found_paths:
+        for link in self.get_links_from_endpoint(root):
+            path = link.path
             linked_resource = ResourcePath(path)
             path_sans_guid = linked_resource.generic_path()
             linked_resource_name = linked_resource.infer_resource()
@@ -134,12 +140,12 @@ class Crawler(object):
             print(f'    {path_sans_guid} -- {linked_resource_name}')
 
             if not self.graph.has_resource(linked_resource_name):
-                self.graph.add_resource(linked_resource_name)
+                self.graph.add_resource(linked_resource_name, link.is_v3())
 
             if not self.graph.has_link(resource_name, linked_resource_name, path_sans_guid):
                 self.graph.add_link(resource_name, linked_resource_name, path_sans_guid)
 
-            if path_sans_guid not in self.visited_paths:
+            if link.is_read() and link.is_v3() and not link.is_download() and path_sans_guid not in self.visited_paths:
                 self.find_all_paths(path)
 
     def get_links_from_endpoint(self, endpoint):
@@ -151,9 +157,6 @@ class Crawler(object):
         else:
             print(f'{endpoint} has no links')
             return []
-
-    def get_paths_from_links(self, links):
-        return [link.path for link in links if link.is_read() and link.is_v3() and not link.is_download()]
 
 
 def main():
