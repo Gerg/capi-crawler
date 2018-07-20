@@ -65,11 +65,7 @@ class ResourceGraph(object):
 
         self.v_names = self.graph.new_vertex_property("string")
         self.v_colors = self.graph.new_vertex_property("string")
-        self.graph.vertex_properties["name"] = self.v_names
-        self.graph.vertex_properties["color"] = self.v_colors
-
         self.e_names = self.graph.new_edge_property("string")
-        self.graph.edge_properties["name"] = self.e_names
 
         self.vertices = {}
         self.edges = {}
